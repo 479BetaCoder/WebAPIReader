@@ -1,4 +1,4 @@
-package edu.neu.csye6220.assignment3;
+package edu.neu.csye6220.weather;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -55,21 +55,32 @@ public class WeatherForecast extends HttpServlet {
 		String language = "en";
 		String standard = "imperial";
 		int rows = 5;
-		int days = Integer.parseInt(request.getParameter("rows"));
+
 		if (request.getParameter("txtCity") != null && request.getParameter("txtCity").trim() != "") {
-			city = URLEncoder.encode(request.getParameter("txtCity").split(",")[0],"UTF-8");//.split(",")[0];
+			city = URLEncoder.encode(request.getParameter("txtCity").split(",")[0], "UTF-8");
+
+		}
+		if (request.getParameter("language") != null && request.getParameter("language").trim() != "") {
+			language = request.getParameter("language");
+
+		}
+		if (request.getParameter("standard") != null && request.getParameter("standard").trim() != "") {
+			standard = request.getParameter("standard");
 			
+		}
+		if (request.getParameter("rows") != null && request.getParameter("rows").trim() != "") {
+			rows = Integer.parseInt(request.getParameter("rows"));
+
 		}
 
 		try {
-			String weatherXml = getForecast(city,language,standard,rows);
-			Weather wResult =	readXmlForecast(weatherXml,days);
-			if(wResult!=null) {
-			HttpSession weathSess = request.getSession();
-			weathSess.setAttribute("wer", wResult);
-			response.sendRedirect("WeatherForecast.jsp");
-			}
-			else {
+			String weatherXml = getForecast(city, language, standard, rows);
+			Weather wResult = readXmlForecast(weatherXml);
+			if (wResult != null) {
+				HttpSession weathSess = request.getSession();
+				weathSess.setAttribute("wer", wResult);
+				response.sendRedirect("WeatherForecast.jsp");
+			} else {
 				response.sendRedirect("Error.jsp");
 			}
 
@@ -80,9 +91,8 @@ public class WeatherForecast extends HttpServlet {
 
 	}
 
-	public Weather readXmlForecast(String weatherContent, int days) {
+	public Weather readXmlForecast(String weatherContent) {
 
-		
 		Weather wObj = new Weather();
 
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -92,56 +102,57 @@ public class WeatherForecast extends HttpServlet {
 			document.getDocumentElement().normalize();
 
 			NodeList nameList = document.getElementsByTagName("name");
-			if(nameList!=null && nameList.getLength()>0) {
-			wObj.setLocation(nameList.item(0).getTextContent());
-			NodeList timeList = document.getElementsByTagName("time");
-			
-			for (int i = 0; i < timeList.getLength(); i++) {
-				Period pObj = new Period();
-				Node time = timeList.item(i);
-				if (time.getNodeType() == Node.ELEMENT_NODE) {
-					Element e = (Element) time;
+			if (nameList != null && nameList.getLength() > 0) {
+				wObj.setLocation(nameList.item(0).getTextContent());
+				NodeList timeList = document.getElementsByTagName("time");
 
-					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-					Date fromDate = dateFormat.parse(e.getAttribute("from"));
-					Date toDate = dateFormat.parse(e.getAttribute("to"));
-					
-					pObj.setFromDate(fromDate);
-					pObj.setToDate(toDate);
+				for (int i = 0; i < timeList.getLength(); i++) {
+					Period pObj = new Period();
+					Node time = timeList.item(i);
+					if (time.getNodeType() == Node.ELEMENT_NODE) {
+						Element e = (Element) time;
 
-					NodeList timeChildList = e.getChildNodes();
-					for (int j = 0; j < timeChildList.getLength(); j++) {
-						Node ch = timeChildList.item(j);
-						if (ch.getNodeType() == Node.ELEMENT_NODE) {
-							Element ej = (Element) ch;
-							String nodeName = ej.getNodeName();
+						SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+						Date fromDate = dateFormat.parse(e.getAttribute("from"));
+						Date toDate = dateFormat.parse(e.getAttribute("to"));
 
-							switch (nodeName) {
+						pObj.setFromDate(fromDate);
+						pObj.setToDate(toDate);
 
-							case "symbol":
-								pObj.setSkyStatus(ej.getAttribute("name"));
-								break;
-							case "windSpeed":
-								pObj.setWindSpeed(ej.getAttribute("name"));
-								break;
-							case "temperature":
-								pObj.setTemperature(Double.parseDouble(ej.getAttribute("value")));
-								break;
-							case "pressure":
-								pObj.setPressure(Double.parseDouble(ej.getAttribute("value")));
-								break;
-							case "humidity":
-								pObj.setHumidity(Double.parseDouble(ej.getAttribute("value")));
-								break;
+						NodeList timeChildList = e.getChildNodes();
+						for (int j = 0; j < timeChildList.getLength(); j++) {
+							Node ch = timeChildList.item(j);
+							if (ch.getNodeType() == Node.ELEMENT_NODE) {
+								Element ej = (Element) ch;
+								String nodeName = ej.getNodeName();
+
+								switch (nodeName) {
+
+								case "symbol":
+									pObj.setSkyStatus(ej.getAttribute("name"));
+									break;
+								case "windSpeed":
+									pObj.setWindSpeed(ej.getAttribute("name"));
+									break;
+								case "temperature":
+									pObj.setTemperature(Double.parseDouble(ej.getAttribute("value")));
+									break;
+								case "pressure":
+									pObj.setPressure(Double.parseDouble(ej.getAttribute("value")));
+									break;
+								case "humidity":
+									pObj.setHumidity(Double.parseDouble(ej.getAttribute("value")));
+									break;
+
+								}
 
 							}
-
 						}
 					}
+					wObj.addToPeriodList(pObj);
+					;
 				}
-				wObj.addToPeriodList(pObj);;
-			}
-			}else {
+			} else {
 				return null;
 			}
 
@@ -155,15 +166,16 @@ public class WeatherForecast extends HttpServlet {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
+
 		return wObj;
 
 	}
 
-	public String getForecast(String city,String language,String standard,int rows) throws Exception {
+	public String getForecast(String city, String language, String standard, int rows) throws Exception {
 
 		CloseableHttpClient httpClient = HttpClients.createDefault();
-		String uri = "http://api.openweathermap.org/data/2.5/forecast?q=" + city +"&mode=xml&lang="+language+"&units="+standard+"&cnt="+rows+"&APPID=7e7b1f6023f3d42eab030a4817826c8a";
+		String uri = "http://api.openweathermap.org/data/2.5/forecast?q=" + city + "&mode=xml&lang=" + language
+				+ "&units=" + standard + "&cnt=" + rows + "&APPID=7e7b1f6023f3d42eab030a4817826c8a";
 		HttpGet getForecast = new HttpGet(uri);
 		CloseableHttpResponse httpResponse = httpClient.execute(getForecast);
 		HttpEntity httpEntity = httpResponse.getEntity();

@@ -1,4 +1,4 @@
-package edu.neu.csye6220.assignment3;
+package edu.neu.csye6220.weather;
 
 import java.util.ArrayList;
 

@@ -1,0 +1,51 @@
+.form-horizontal {
+	border-top: 25px;
+}
+
+#imgSubscribe {
+	width: 20px;
+	height: 20px;
+	float: right;
+}
+
+#noteLanguage {
+	font-size: 12px;
+}
+
+body {
+	overflow-x: hidden;
+}
+
+#feedLink {
+	color: steelblue;
+	text-decoration: underline;
+}
+
+#feedtitle {
+	color: orangered;
+}
+
+#hdrLocation {
+	background: powderblue;
+	padding: 8px;
+	border-radius: 10px;
+	font-family: sans-serif;
+}
+
+#lblCityValue {
+	margin-left: 45%;
+}
+
+#tblWeather {
+	margin-left: 10%;
+	width: 80%;
+}
+
+#wtrTitle {
+	font-size: 25px;
+	padding: 10px;
+}
+
+#frmWeather {
+	margin-left: 30px;
+}
