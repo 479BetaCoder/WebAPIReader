@@ -29,7 +29,7 @@
 				<label class="control-label col-sm-2" for="txtFeedLimit">Feed
 					Limit : </label>
 				<div class="col-sm-5">
-					<input class="form-control" type="number" name="txtFeedLimit" title="This is a required field" placeholder="Enter your desired feed limit" required="required">
+					<input class="form-control" type="number" name="txtFeedLimit" title="This is a required field" placeholder="Enter your desired feed limit" required="required" min=1>
 				</div>
 			</div>
 			<div class="form-group">
