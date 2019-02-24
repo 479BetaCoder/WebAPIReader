@@ -8,7 +8,14 @@
 <title></title>
 </head>
 <body>
-Sorry the feed you are subscribing had some issue. Please try some other time.
-Return to <a href="Subscribe.jsp">Feed Reader</a>
+<div>
+<p id="errMsg"> Sorry the feed you are subscribing to had some issue. </p>
+</div>
+<div id="divFdValidate">
+Please check your internet connection [OR] Please validate your feed <a href="https://validator.w3.org/feed/" target="_blank">here</a>
+</div>
+<div>
+<a id="returnLink" href="Subscribe.jsp" >Return</a>
+</div>
 </body>
 </html>

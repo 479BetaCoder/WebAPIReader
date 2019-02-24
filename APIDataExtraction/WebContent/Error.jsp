@@ -5,10 +5,16 @@
 <html>
 <head>
 <link rel='stylesheet' type='text/css' href='./Shared/API.css'>
-<title>Insert title here</title>
+<title></title>
 </head>
 <body>
-Sorry the city you are searching for is not covered in our weather application. Please try some other time.
-Return to <a href="WeatherForecast.jsp">Weather Forecast</a>
+<div>
+<p id="errMsg">
+Sorry the city you are searching for is not covered in our weather application or had some issues fetching the data. Please check your internet connection and try again.
+</p>
+</div>
+<div>
+<a id="returnLink" href="WeatherForecast.jsp" >Return</a>
+</div>
 </body>
 </html>

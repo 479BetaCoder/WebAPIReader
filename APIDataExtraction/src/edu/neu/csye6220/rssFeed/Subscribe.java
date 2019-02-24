@@ -14,7 +14,6 @@ import javax.servlet.http.HttpSession;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -51,123 +50,103 @@ public class Subscribe extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		String url = request.getParameter("txtFeedUrl");
-		int feedLimit = 5;
-		// "http://feeds.bbci.co.uk/news/world/rss.xml?edition=uk#";
-		if(request.getParameter("txtFeedLimit")!=null && request.getParameter("txtFeedLimit").trim()!="") {
-		feedLimit = Integer.parseInt(request.getParameter("txtFeedLimit"));
-		}
-		String feedContent;
-		
-		if (url != null && url.trim() != "") {
-			HttpSession sessionFeed = request.getSession();
-			sessionFeed.setMaxInactiveInterval(900);
-			ArrayList<Feed> feedObjList;
-			synchronized (sessionFeed) {
-				feedObjList = (ArrayList<Feed>) sessionFeed.getAttribute("rss");
-				if (feedObjList == null || feedObjList.size() == 0) {
-					feedObjList = new ArrayList<Feed>();
-					sessionFeed.setAttribute("rss", feedObjList);
-				}
+		HttpSession sessionFeed = request.getSession();
+		sessionFeed.setAttribute("feedCnt", false);
 
-				try {
+		String url = request.getParameter("txtFeedUrl");
+		String feedContent;
+		int feedLimit = 0;
+		String redirectPage = "Subscribe.jsp";
+		try {
+			if (request.getParameter("txtFeedLimit") != null && request.getParameter("txtFeedLimit").trim() != "") {
+				feedLimit = Integer.parseInt(request.getParameter("txtFeedLimit"));
+			}
+			if (url != null && url.trim() != "") {
+
+				sessionFeed.setMaxInactiveInterval(900);
+				ArrayList<Feed> feedObjList;
+				synchronized (sessionFeed) {
+					feedObjList = (ArrayList<Feed>) sessionFeed.getAttribute("rss");
+					if (feedObjList == null) {
+						feedObjList = new ArrayList<Feed>();
+						sessionFeed.setAttribute("rss", feedObjList);
+					}
+
 					feedContent = getFeed(url);
-					if(feedContent!=null) {
-					readXmlFeed(feedContent, feedLimit,feedObjList);
-					}else {
+					if (feedContent != null) {
+						readXmlFeed(feedContent, feedLimit, feedObjList);
+						sessionFeed.setAttribute("feedCnt", true);
+
+					} else {
+						sessionFeed.setAttribute("feedCnt", false);
 						response.sendRedirect("ErrorSub.jsp");
 					}
-				
-				} catch (Exception e) {
-					e.printStackTrace();
+
 				}
-
 			}
-
+		} catch (Exception e) {
+			sessionFeed.setAttribute("feedCnt", false);
+			redirectPage = "ErrorSub.jsp";
 		}
-
-		response.sendRedirect("Subscribe.jsp");
+		
+		response.sendRedirect(redirectPage);
 	}
 
 	public void readXmlFeed(String feedContent, int feedLimit, ArrayList<Feed> fdObjList)
+			throws ParserConfigurationException, SAXException, IOException
 
 	{
 		Feed fdObj = new Feed();
-			
-		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			try {
-				Document document = builder.parse(new InputSource(new StringReader(feedContent)));
-				document.getDocumentElement().normalize();
-				
-				// loop through each item
-				Node channelName = document.getElementsByTagName("channel").item(0);
-				Element ech = (Element) channelName;
-				
-				
-				
-				 
-                // get the "title elem" in this item (only one)
-                NodeList chTitleList = ech.getElementsByTagName("title");
-                Element chTitleElem = (Element) chTitleList.item(0);
- 
-                // get the "text node" in the title (only one)
-                Node chTitleNode = chTitleElem.getChildNodes().item(0);
-                
-                
-                for (Iterator<Feed> iterator = fdObjList.iterator(); iterator.hasNext(); ) {
-                    Feed fd = iterator.next();
-                    if(fd.getFeedName().equalsIgnoreCase(chTitleNode.getNodeValue()))
-                	{
-                        iterator.remove();
-                    }
-                }
-                
-               
-                fdObj.setFeedName(chTitleNode.getNodeValue());
-				
-				NodeList items = document.getElementsByTagName("item");
-				int limit = items.getLength() > feedLimit ? feedLimit : items.getLength();
-				for (int i = 0; i < limit; i++) {
-					FeedItem fditem = new FeedItem();
-					Node n = items.item(i);
-					if (n.getNodeType() != Node.ELEMENT_NODE)
-						continue;
-					Element e = (Element) n;
 
-					// get the "title elem" in this item (only one)
-					NodeList titleList = e.getElementsByTagName("title");
-					Element titleElem = (Element) titleList.item(0);
-					NodeList linkList = e.getElementsByTagName("link");
-					Element linkElem = (Element) linkList.item(0);
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
 
-					// get the "text node" in the title (only one)
-					Node titleNode = titleElem.getChildNodes().item(0);
-					Node linkNode = linkElem.getChildNodes().item(0);
-					
-					fditem.setTitle(titleNode.getNodeValue());
-					fditem.setLink(linkNode.getNodeValue());
-					fdObj.addFeedItems(fditem);
-					
-					
-				}
-				
-				fdObjList.add(fdObj);
-				
-				
+		Document document = builder.parse(new InputSource(new StringReader(feedContent)));
+		document.getDocumentElement().normalize();
 
-			} catch (SAXException e) {
+		Node channelName = document.getElementsByTagName("channel").item(0);
+		Element ech = (Element) channelName;
 
-				e.printStackTrace();
+		NodeList chTitleList = ech.getElementsByTagName("title");
+		Element chTitleElem = (Element) chTitleList.item(0);
+
+		// get the "text node" in the title (only one)
+		Node chTitleNode = chTitleElem.getChildNodes().item(0);
+
+		for (Iterator<Feed> iterator = fdObjList.iterator(); iterator.hasNext();) {
+			Feed fd = iterator.next();
+			if (fd.getFeedName().equalsIgnoreCase(chTitleNode.getNodeValue())) {
+				iterator.remove();
 			}
-		} catch (IOException e) {
-
-			e.printStackTrace();
-		} catch (ParserConfigurationException e) {
-
-			e.printStackTrace();
 		}
+
+		fdObj.setFeedName(chTitleNode.getNodeValue());
+
+		NodeList items = document.getElementsByTagName("item");
+		int limit = items.getLength() > feedLimit ? feedLimit : items.getLength();
+		for (int i = 0; i < limit; i++) {
+			FeedItem fditem = new FeedItem();
+			Node n = items.item(i);
+			if (n.getNodeType() != Node.ELEMENT_NODE)
+				continue;
+			Element e = (Element) n;
+
+			NodeList titleList = e.getElementsByTagName("title");
+			Element titleElem = (Element) titleList.item(0);
+			NodeList linkList = e.getElementsByTagName("link");
+			Element linkElem = (Element) linkList.item(0);
+
+			// get the "text node" in the title (only one)
+			Node titleNode = titleElem.getChildNodes().item(0);
+			Node linkNode = linkElem.getChildNodes().item(0);
+
+			fditem.setTitle(titleNode.getNodeValue());
+			fditem.setLink(linkNode.getNodeValue());
+			fdObj.addFeedItems(fditem);
+
+		}
+
+		fdObjList.add(fdObj);
 
 	}
 
@@ -179,15 +158,6 @@ public class Subscribe extends HttpServlet {
 		HttpEntity httpEntity = httpResponse.getEntity();
 		String xml = EntityUtils.toString(httpEntity);
 		return xml;
-
-	}
-
-	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
-	 *      response)
-	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
 
 	}
 

@@ -32,8 +32,9 @@
 		<div class="form-group" id="locationField">
 			<label class="control-label col-sm-2" for="txtCity">City</label>
 			<div class="col-sm-5">
-				<input id="autocomplete" class="form-control" name="txtCity"
+				<input id="autocomplete" class="form-control" name="txtCity" required="required" pattern=".*\S+.*" title="This field is required"
 					placeholder="Enter your City" onFocus="geolocate()" type="text"></input>
+		<label id="noteLanguage">NOTE: Google Autocomplete is enabled. If results are not satisfactory, please type in the city name.</label>
 			</div>
 		</div>
 		<div class="form-group">

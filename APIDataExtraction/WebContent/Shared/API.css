@@ -2,14 +2,41 @@
 	border-top: 25px;
 }
 
+#returnLink{
+	margin-left: 10px;
+    background: black;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+#subContainer{
+	width:90%;
+	margin-left: 50px;
+}
+
+#errMsg{
+	color:red;
+	margin-left:10px;
+}
+#divFdValidate{
+	margin-left:10px;
+	margin-bottom: 15px;
+}
+
 #imgSubscribe {
 	width: 20px;
-	height: 20px;
-	float: right;
+    height: 20px;
+    float: left;
+    margin-left: 30px;
+    padding: 2px;
 }
 
 #noteLanguage {
 	font-size: 12px;
+    font-weight: lighter;
+    padding-top: 5px;
 }
 
 body {
