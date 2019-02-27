@@ -92,7 +92,7 @@ public class WeatherForecast extends HttpServlet {
 
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		String uri = "http://api.openweathermap.org/data/2.5/forecast?q=" + city + "&mode=xml&lang=" + language
-				+ "&units=" + standard + "&cnt=" + rows + "&APPID=7e7b1f6023f3d42eab030a4817826c8a";
+				+ "&units=" + standard + "&cnt=" + rows + "&APPID=key";
 
 		HttpGet getForecast = new HttpGet(uri);
 		CloseableHttpResponse httpResponse = httpClient.execute(getForecast);
