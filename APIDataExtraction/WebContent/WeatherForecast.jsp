@@ -8,7 +8,7 @@
 <head>
 <link rel='stylesheet' type='text/css' href='./Shared/API.css'>
 <script async defer
-	src="https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyA3cuMvhvz23X-a68vmrOFyJEeHoESIKTo"></script>
+	src="https://maps.googleapis.com/maps/api/js?libraries=places&key=getYourKeyHere"></script>
 <script>
 	var autocomplete;
 	function initialize() {
