@@ -35,14 +35,6 @@ public class Subscribe extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * @see HttpServlet#HttpServlet()
-	 */
-	public Subscribe() {
-		super();
-
-	}
-
-	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
 	 *      response)
 	 */
@@ -54,18 +46,25 @@ public class Subscribe extends HttpServlet {
 		sessionFeed.setAttribute("feedCnt", false);
 
 		String url = request.getParameter("txtFeedUrl");
+		sessionFeed.setAttribute("urlSearched", url);
 		String feedContent;
 		int feedLimit = 0;
 		String redirectPage = "Subscribe.jsp";
 		try {
 			if (request.getParameter("txtFeedLimit") != null && request.getParameter("txtFeedLimit").trim() != "") {
 				feedLimit = Integer.parseInt(request.getParameter("txtFeedLimit"));
+				sessionFeed.setAttribute("feedlimitSet", feedLimit);
 			}
 			if (url != null && url.trim() != "") {
 
-				sessionFeed.setMaxInactiveInterval(900);
+				sessionFeed.setMaxInactiveInterval(600);
 				ArrayList<Feed> feedObjList;
+				// Starting a session to store all the Feeds subscribed during the user session.
 				synchronized (sessionFeed) {
+					/*
+					 * Placed this in synchronized to be Thread safe and stop multiple users to
+					 * access the List of feeds.
+					 */
 					feedObjList = (ArrayList<Feed>) sessionFeed.getAttribute("rss");
 					if (feedObjList == null) {
 						feedObjList = new ArrayList<Feed>();
@@ -88,22 +87,41 @@ public class Subscribe extends HttpServlet {
 			sessionFeed.setAttribute("feedCnt", false);
 			redirectPage = "ErrorSub.jsp";
 		}
-		
+
+		// Redirecting the feeds and related content to the corresponding page
 		response.sendRedirect(redirectPage);
 	}
 
-	public void readXmlFeed(String feedContent, int feedLimit, ArrayList<Feed> fdObjList)
+	// Method to initiate HttpClient request to the requested URL feed.
+	private String getFeed(String uri) throws Exception {
+
+		//HTTP Client Get Request to the entered URL
+		CloseableHttpClient httpClient = HttpClients.createDefault();
+		HttpGet getFeed = new HttpGet(uri);
+		CloseableHttpResponse httpResponse = httpClient.execute(getFeed);
+		HttpEntity httpEntity = httpResponse.getEntity();
+		String xml = EntityUtils.toString(httpEntity);
+		return xml;
+
+	}
+
+	// Helper routine to read the XML feed content obtained after HttpClient request
+	// to the requested URL
+	private void readXmlFeed(String feedContent, int feedLimit, ArrayList<Feed> fdObjList)
 			throws ParserConfigurationException, SAXException, IOException
 
 	{
 		Feed fdObj = new Feed();
 
+		// Building document object to use DOM Parser to extract useful data from XML
+		// returned
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 
 		Document document = builder.parse(new InputSource(new StringReader(feedContent)));
 		document.getDocumentElement().normalize();
 
+		// Extracting channel Name to display in the UI against the channel subscribed
 		Node channelName = document.getElementsByTagName("channel").item(0);
 		Element ech = (Element) channelName;
 
@@ -113,6 +131,10 @@ public class Subscribe extends HttpServlet {
 		// get the "text node" in the title (only one)
 		Node chTitleNode = chTitleElem.getChildNodes().item(0);
 
+		/*
+		 * Looping to check if the feed is already subscribed. If subscribed, the old
+		 * feed content is removed and new feed will be added
+		 */
 		for (Iterator<Feed> iterator = fdObjList.iterator(); iterator.hasNext();) {
 			Feed fd = iterator.next();
 			if (fd.getFeedName().equalsIgnoreCase(chTitleNode.getNodeValue())) {
@@ -127,10 +149,12 @@ public class Subscribe extends HttpServlet {
 		for (int i = 0; i < limit; i++) {
 			FeedItem fditem = new FeedItem();
 			Node n = items.item(i);
+			// Checking for only Element Node and no TextNode
 			if (n.getNodeType() != Node.ELEMENT_NODE)
 				continue;
 			Element e = (Element) n;
 
+			// Fetching the details required using the element node.
 			NodeList titleList = e.getElementsByTagName("title");
 			Element titleElem = (Element) titleList.item(0);
 			NodeList linkList = e.getElementsByTagName("link");
@@ -146,18 +170,8 @@ public class Subscribe extends HttpServlet {
 
 		}
 
-		fdObjList.add(fdObj);
-
-	}
-
-	public String getFeed(String uri) throws Exception {
-
-		CloseableHttpClient httpClient = HttpClients.createDefault();
-		HttpGet getFeed = new HttpGet(uri);
-		CloseableHttpResponse httpResponse = httpClient.execute(getFeed);
-		HttpEntity httpEntity = httpResponse.getEntity();
-		String xml = EntityUtils.toString(httpEntity);
-		return xml;
+		// Adding the newly subscribed feed on top of the list.
+		fdObjList.add(0, fdObj);
 
 	}
 

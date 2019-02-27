@@ -18,7 +18,7 @@
 				<label class="control-label col-sm-2" for="txtFeedUrl">Feed
 					URL : </label>
 				<div class="col-sm-5">
-					<input id="txtFeedUrl"  class="form-control" type="text" name="txtFeedUrl" placeholder="Enter your feed url" required="required" pattern="https?://.+" title="Include http://" >
+					<input id="txtFeedUrl" value="${urlSearched}"  class="form-control" type="text" name="txtFeedUrl" placeholder="Enter your feed url" required="required" pattern="https?://.+" title="Include http://" >
 
 					<label for="lnkfeed"> <a
 						href="https://www.repeatsoftware.com/help/RSSFeedList.htm"
@@ -29,7 +29,7 @@
 				<label class="control-label col-sm-2" for="txtFeedLimit">Feed
 					Limit : </label>
 				<div class="col-sm-5">
-					<input class="form-control" type="number" name="txtFeedLimit" title="This is a required field" placeholder="Enter your desired feed limit" required="required" min=1>
+					<input class="form-control" type="number" value="${feedlimitSet}" name="txtFeedLimit" title="This is a required field" placeholder="Enter your desired feed limit" required="required" min=1>
 				</div>
 			</div>
 			<div class="form-group">
@@ -56,7 +56,7 @@
 		</p>
 		<div>
 			<table id="subTable" class="table">
-				<c:forEach items="${rss}" var="feed">
+				<c:forEach  items="${rss}" var="feed">
 					<tr>
 						<td rowspan="${feed.getFeeditemList().size()+1}">
 							<div

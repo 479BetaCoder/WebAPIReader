@@ -34,7 +34,7 @@ import org.xml.sax.SAXException;
 public class WeatherForecast extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
 		String city = "";
@@ -42,20 +42,25 @@ public class WeatherForecast extends HttpServlet {
 		String standard = "imperial";
 		int rows = 5;
 
+		HttpSession weathSess = request.getSession();
+		weathSess.setAttribute("weReport", false);
+
 		if (request.getParameter("txtCity") != null && request.getParameter("txtCity").trim() != "") {
 			city = URLEncoder.encode(request.getParameter("txtCity").split(",")[0], "UTF-8");
-
+			weathSess.setAttribute("cityName", request.getParameter("txtCity"));
 		}
 		if (request.getParameter("language") != null && request.getParameter("language").trim() != "") {
 			language = request.getParameter("language");
-
+			weathSess.setAttribute("lang", language);
 		}
 		if (request.getParameter("standard") != null && request.getParameter("standard").trim() != "") {
 			standard = request.getParameter("standard");
+			weathSess.setAttribute("std", standard);
 
 		}
 		if (request.getParameter("rows") != null && request.getParameter("rows").trim() != "") {
 			rows = Integer.parseInt(request.getParameter("rows"));
+			weathSess.setAttribute("rowNum", rows);
 
 		}
 
@@ -63,23 +68,47 @@ public class WeatherForecast extends HttpServlet {
 			String weatherXml = getForecast(city, language, standard, rows);
 			Weather wResult = readXmlForecast(weatherXml);
 			if (wResult != null) {
-				HttpSession weathSess = request.getSession();
+
 				weathSess.setAttribute("wer", wResult);
+				weathSess.setMaxInactiveInterval(600);
+				weathSess.setAttribute("weReport", true);
 				response.sendRedirect("WeatherForecast.jsp");
 			} else {
+				weathSess.setAttribute("wer", null);
+				weathSess.setAttribute("weReport", false);
 				response.sendRedirect("Error.jsp");
 			}
 
 		} catch (Exception e) {
+			weathSess.setAttribute("wer", null);
+			weathSess.setAttribute("weReport", false);
 			response.sendRedirect("Error.jsp");
 		}
 
 	}
 
+	// Method to make a GET request using HTTP Client to OpenWeather MAP API
+	public String getForecast(String city, String language, String standard, int rows) throws Exception {
+
+		CloseableHttpClient httpClient = HttpClients.createDefault();
+		String uri = "http://api.openweathermap.org/data/2.5/forecast?q=" + city + "&mode=xml&lang=" + language
+				+ "&units=" + standard + "&cnt=" + rows + "&APPID=7e7b1f6023f3d42eab030a4817826c8a";
+
+		HttpGet getForecast = new HttpGet(uri);
+		CloseableHttpResponse httpResponse = httpClient.execute(getForecast);
+		HttpEntity httpEntity = httpResponse.getEntity();
+		String xml = EntityUtils.toString(httpEntity);
+		return xml;
+
+	}
+
+	// Reading the returned XML data from API and extracting useful Information
 	public Weather readXmlForecast(String weatherContent)
 			throws ParseException, ParserConfigurationException, SAXException, IOException {
 
 		Weather wObj = new Weather();
+
+		// Building Document to use DOM Parsing to extract information from XML file
 
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
@@ -135,28 +164,14 @@ public class WeatherForecast extends HttpServlet {
 						}
 					}
 				}
+				// Adding the required parameters to the Weather Forecasting
 				wObj.addToPeriodList(pObj);
-				;
 			}
 		} else {
 			return null;
 		}
 
 		return wObj;
-
-	}
-
-	public String getForecast(String city, String language, String standard, int rows) throws Exception {
-
-		CloseableHttpClient httpClient = HttpClients.createDefault();
-		String uri = "http://api.openweathermap.org/data/2.5/forecast?q=" + city + "&mode=xml&lang=" + language
-				+ "&units=" + standard + "&cnt=" + rows + "&APPID=7e7b1f6023f3d42eab030a4817826c8a";
-
-		HttpGet getForecast = new HttpGet(uri);
-		CloseableHttpResponse httpResponse = httpClient.execute(getForecast);
-		HttpEntity httpEntity = httpResponse.getEntity();
-		String xml = EntityUtils.toString(httpEntity);
-		return xml;
 
 	}
 
